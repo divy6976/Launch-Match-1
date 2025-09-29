@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -14,23 +15,48 @@ import Contact from "./pages/Contact";
 
 const queryClient = new QueryClient();
 
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {[
+          { p: "/", e: <Index /> },
+          { p: "/login", e: <Login /> },
+          { p: "/signup", e: <Signup /> },
+          { p: "/startups-feed", e: <StartupsFeed /> },
+          { p: "/founder-dashboard", e: <FounderDashboard /> },
+          { p: "/submit-startup", e: <SubmitStartup /> },
+          { p: "/contact", e: <Contact /> },
+          { p: "*", e: <NotFound /> },
+        ].map(({ p, e }) => (
+          <Route
+            key={p}
+            path={p}
+            element={
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                {e}
+              </motion.div>
+            }
+          />
+        ))}
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/startups-feed" element={<StartupsFeed />} />
-              <Route path="/founder-dashboard" element={<FounderDashboard />} />
-              <Route path="/submit-startup" element={<SubmitStartup />} />
-              <Route path="/contact" element={<Contact />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+        <AnimatedRoutes />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
