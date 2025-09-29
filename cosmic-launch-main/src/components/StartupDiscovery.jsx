@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { 
   Eye, 
   ExternalLink, 
@@ -93,7 +94,13 @@ const StartupDiscovery = () => {
     <section id="startups" className="py-16 md:py-20 bg-white">
       <div className="container mx-auto px-4">
         {/* Section Header */}
-        <div className="text-center mb-12 md:mb-16 animate-fade-in">
+        <motion.div 
+          className="text-center mb-12 md:mb-16"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.5 }}
+        >
           <h2 className="text-3xl font-bold text-gray-900 md:text-4xl lg:text-5xl mb-4 text-balance">
             Discover Our <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">Startups</span>
           </h2>
@@ -101,15 +108,18 @@ const StartupDiscovery = () => {
             Explore innovative startups looking for early adopters. Be the first to try 
             products that match your needs.
           </p>
-        </div>
+        </motion.div>
 
         {/* Startup Grid */}
         <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-3">
           {mockStartups.map((startup, index) => (
-            <div 
+            <motion.div 
               key={startup.id} 
-              className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group relative flex flex-col h-full"
-              style={{ animationDelay: `${400 + index * 100}ms` }}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.4, delay: 0.05 * index }}
+              className="startup-card"
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4 relative z-10">
@@ -229,12 +239,18 @@ const StartupDiscovery = () => {
                   <ExternalLink className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
                 </Button>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Load More */}
-        <div className="text-center mt-12 md:mt-16 animate-fade-in [animation-delay:800ms]">
+        <motion.div 
+          className="text-center mt-12 md:mt-16"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
           <Button 
             variant="outline" 
             size="lg" 
@@ -243,7 +259,7 @@ const StartupDiscovery = () => {
             Login to see more startups
             <Globe className="ml-2 h-4 w-4 md:h-5 md:w-5" />
           </Button>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

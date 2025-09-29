@@ -1,4 +1,5 @@
 import { Rocket, Twitter, Github, Linkedin, Mail } from "lucide-react";
+import { motion } from "framer-motion";
 
 const Footer = () => {
   return (
@@ -6,7 +7,13 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-2">
+          <motion.div 
+            className="col-span-1 md:col-span-2 lg:col-span-2"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.4 }}
+          >
             <div className="flex items-center space-x-2 mb-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 shadow-lg">
                 <Rocket className="h-5 w-5 text-white" />
@@ -31,10 +38,15 @@ const Footer = () => {
                 <Mail className="h-5 w-5" />
               </a>
             </div>
-          </div>
+          </motion.div>
 
           {/* Platform */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.05 }}
+          >
             <h3 className="font-semibold text-gray-900 mb-4 text-lg">Platform</h3>
             <ul className="space-y-3 text-sm text-gray-600">
               <li><a href="#" className="hover:text-blue-600 transition-colors block py-1">Explore Startups</a></li>
@@ -42,10 +54,15 @@ const Footer = () => {
               <li><a href="#" className="hover:text-blue-600 transition-colors block py-1">Early Adopter Program</a></li>
               <li><a href="#" className="hover:text-blue-600 transition-colors block py-1">Success Stories</a></li>
             </ul>
-          </div>
+          </motion.div>
 
           {/* Support */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
             <h3 className="font-semibold text-gray-900 mb-4 text-lg">Support</h3>
             <ul className="space-y-3 text-sm text-gray-600">
               <li><a href="#" className="hover:text-blue-600 transition-colors block py-1">Help Center</a></li>
@@ -53,7 +70,7 @@ const Footer = () => {
               <li><a href="#" className="hover:text-blue-600 transition-colors block py-1">FAQ</a></li>
               <li><a href="#" className="hover:text-blue-600 transition-colors block py-1">Community</a></li>
             </ul>
-          </div>
+          </motion.div>
         </div>
 
         <div className="border-t border-gray-200 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
