@@ -21,24 +21,6 @@ const Index = () => {
         <Header />
         <main>
           <Hero />
-          {/* Metrics Section */}
-          <section className="py-10 md:py-14">
-            <div className="container">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 bg-white/70 backdrop-blur rounded-2xl border border-gray-100 p-4 md:p-6 shadow-soft">
-                {[
-                  { label: "Startups", value: "120+" },
-                  { label: "Early Adopters", value: "3,500+" },
-                  { label: "Feedback Shared", value: "8,900+" },
-                  { label: "Matches", value: "2,100+" },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center">
-                    <div className="text-2xl md:text-3xl font-extrabold text-gray-900">{stat.value}</div>
-                    <div className="mt-1 text-xs md:text-sm text-gray-500">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
           <ValuePropositions />
           <StartupDiscovery />
           {/* Strong CTA Band */}
