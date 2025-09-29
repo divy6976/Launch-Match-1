@@ -433,8 +433,22 @@ const Signup = () => {
           </CardContent>
         </Card>
 
+        {/* Benefits Strip */}
+        <div className="mt-8 grid grid-cols-3 gap-3 text-center">
+          {[
+            { t: "Launch", s: "Submit startup" },
+            { t: "Match", s: "Find adopters" },
+            { t: "Grow", s: "Collect feedback" }
+          ].map((b) => (
+            <div key={b.t} className="rounded-xl border border-gray-200 bg-white/70 p-3">
+              <div className="text-sm font-semibold text-gray-900">{b.t}</div>
+              <div className="text-xs text-gray-500">{b.s}</div>
+            </div>
+          ))}
+        </div>
+
         {/* Back to Home */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-6">
           <Link
             to="/"
             className="text-gray-600 hover:text-blue-600 font-semibold text-lg transition-colors"
