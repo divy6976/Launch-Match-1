@@ -1,0 +1,151 @@
+import axios from 'axios';
+
+// Base API configuration
+// When using Vite dev proxy, call relative /api to avoid CORS entirely
+const API_BASE_URL = '/api';
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: false,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token if available
+api.interceptors.request.use(
+  (config) => {
+    // Add any auth headers if needed
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // For local dev, don't auto-redirect on 401; surface error to UI instead
+    if (error.response?.status === 401) {
+      console.warn('401 Unauthorized', error.response?.data);
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ==================== USER APIs ====================
+
+export const userAPI = {
+  // Sign up a new user
+  signup: async (userData) => {
+    const response = await api.post('/users/signup', userData);
+    return response.data;
+  },
+
+  // Login user
+  login: async (credentials) => {
+    const response = await api.post('/users/login', credentials);
+    return response.data;
+  },
+
+  // Get user profile
+  getProfile: async () => {
+    const response = await api.get('/users/getProfile');
+    return response.data;
+  },
+
+  // Logout user
+  logout: async () => {
+    const response = await api.post('/users/logout');
+    return response.data;
+  },
+};
+
+// ==================== STARTUP APIs ====================
+
+export const startupAPI = {
+  // Create a new startup (Founder only)
+  createStartup: async (startupData) => {
+    const response = await api.post('/startups', startupData);
+    return response.data;
+  },
+
+  // Get personalized feed for adopters
+  getFeedForAdopter: async () => {
+    const response = await api.get('/startups');
+    return response.data;
+  },
+
+  // Get startups for founder
+  getStartupsForFounder: async () => {
+    const response = await api.get('/startups/my-startups');
+    return response.data;
+  },
+
+  // Get feedback for a specific startup (Founder only)
+  getFeedbackForStartup: async (startupId) => {
+    const response = await api.get(`/startups/${startupId}/feedback`);
+    return response.data;
+  },
+  // Get startups for current founder (analytics base)
+  getStartupsForFounder: async () => {
+    const response = await api.get('/startups/my-startups');
+    return response.data;
+  },
+
+  // Test routes
+  testStartupRoutes: async () => {
+    const response = await api.get('/startups/test');
+    return response.data;
+  },
+};
+
+// ==================== FEEDBACK APIs ====================
+
+export const feedbackAPI = {
+  // Submit feedback for a startup (Adopter only)
+  submitFeedback: async (feedbackData) => {
+    const response = await api.post('/feedback', feedbackData);
+    return response.data;
+  },
+};
+
+// ==================== UTILITY APIs ====================
+
+export const utilityAPI = {
+  // Test server connection
+  testServer: async () => {
+    const response = await api.get('/test');
+    return response.data;
+  },
+};
+
+// ==================== ERROR HANDLING ====================
+
+export const handleAPIError = (error) => {
+  if (error.response) {
+    // Server responded with error status
+    return {
+      message: error.response.data?.message || 'An error occurred',
+      status: error.response.status,
+      data: error.response.data,
+    };
+  } else if (error.request) {
+    // Request was made but no response received
+    return {
+      message: 'Server is not responding. Please check your connection.',
+      status: 0,
+    };
+  } else {
+    // Something else happened
+    return {
+      message: 'An unexpected error occurred',
+      status: 0,
+    };
+  }
+};
+
+export default api;

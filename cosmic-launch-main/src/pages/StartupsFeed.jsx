@@ -1,0 +1,524 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { 
+  Search, 
+  Heart, 
+  Filter,
+  Settings,
+  User,
+  ChevronDown,
+  Eye,
+  ExternalLink,
+  Gift,
+  Globe
+} from "lucide-react";
+import { userAPI, startupAPI, handleAPIError } from "../services/api";
+
+const StartupsFeed = () => {
+  const [startups, setStartups] = useState([]);
+  const [isLoadingStartups, setIsLoadingStartups] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedIndustry, setSelectedIndustry] = useState("All");
+  const [userName, setUserName] = useState("User");
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
+  const [selectedB2B, setSelectedB2B] = useState(false);
+  const [selectedB2C, setSelectedB2C] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Get user name from localStorage or URL params
+  useEffect(() => {
+    // Check if user is logged in
+    const loggedInStatus = localStorage.getItem('isLoggedIn');
+    setIsLoggedIn(!!loggedInStatus);
+    
+    if (!loggedInStatus) {
+      // Redirect to login if not authenticated
+      window.location.href = '/login';
+      return;
+    }
+
+    // Try to get user name from localStorage first
+    const storedUserName = localStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
+    } else {
+      // Try to get from URL params (if redirected from signup)
+      const urlParams = new URLSearchParams(window.location.search);
+      const nameFromUrl = urlParams.get('name');
+      if (nameFromUrl) {
+        setUserName(nameFromUrl);
+        localStorage.setItem('userName', nameFromUrl);
+      }
+    }
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown-container')) {
+        setShowCategoryDropdown(false);
+        setShowIndustryDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Fetch startups from API
+  useEffect(() => {
+    const fetchStartups = async () => {
+      try {
+        setIsLoadingStartups(true);
+        const response = await startupAPI.getFeedForAdopter();
+        setStartups(response || []);
+      } catch (error) {
+        console.error("Error fetching startups:", error);
+        setStartups([]);
+      } finally {
+        setIsLoadingStartups(false);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchStartups();
+    }
+  }, [isLoggedIn]);
+
+  const toggleUpvote = (startupId) => {
+    setUpvotedStartups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(startupId)) {
+        newSet.delete(startupId);
+      } else {
+        newSet.add(startupId);
+      }
+      return newSet;
+    });
+  };
+
+  const getUpvoteCount = (startup) => {
+    const baseUpvotes = startup.upvotes;
+    const isUpvoted = upvotedStartups.has(startup.id);
+    return isUpvoted ? baseUpvotes + 1 : baseUpvotes;
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    
+    try {
+      // Call the logout API
+      await userAPI.logout();
+      
+      console.log("Logout successful");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Continue with logout even if API call fails
+    } finally {
+      // Clear local storage and redirect regardless of API response
+      localStorage.clear();
+      window.location.href = '/login';
+    }
+  };
+
+  const mockStartups = [
+    {
+      id: 1,
+      name: "EzyDocs",
+      description: "Streamline your document management with our AI-powered platform that makes organizing and finding files effortless.",
+      category: "Productivity",
+      type: "B2B",
+      tags: ["SaaS", "FinTech", "Productivity"],
+      views: 2,
+      upvotes: 0,
+      hasSpecialOffer: true,
+      specialOfferText: "Special Offer for Early Adopters. This startup has a special discount available for early adopters!",
+      specialOfferCode: null,
+      discount: 25,
+      founder: "Emma Rodriguez",
+      industry: "Technology"
+    },
+    {
+      id: 2,
+      name: "QuillSocial",
+      description: "Revolutionary social media management platform that helps businesses create engaging content and grow their online presence.",
+      category: "Social Media",
+      type: "B2B",
+      tags: ["SaaS", "Social Media", "AI/ML"],
+      views: 8,
+      upvotes: 1,
+      hasSpecialOffer: true,
+      specialOfferText: "Special Offer for Early Adopters. This startup has a special discount available for early adopters!",
+      specialOfferCode: null,
+      discount: 30,
+      founder: "Sarah Johnson",
+      industry: "Technology"
+    },
+    {
+      id: 3,
+      name: "Shaflex",
+      description: "Advanced automation platform that helps businesses streamline their workflows and increase productivity through intelligent process management.",
+      category: "Automation",
+      type: "B2C",
+      tags: ["SaaS", "Social Media", "Automation"],
+      views: 14,
+      upvotes: 4,
+      hasSpecialOffer: false,
+      specialOfferText: "This startup doesn't have a special offer right now.",
+      specialOfferCode: null,
+      discount: 0,
+      founder: "David Kim",
+      industry: "Technology"
+    }
+  ];
+
+  const categories = ["All", "Productivity", "Social Media", "Automation"];
+  const industries = ["All", "Technology"];
+
+  const filteredStartups = startups.filter(startup => {
+    const matchesSearch = startup.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         startup.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         startup.tagline.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === "All" || startup.categories.includes(selectedCategory);
+    const matchesIndustry = selectedIndustry === "All" || startup.industry === selectedIndustry;
+    
+    // B2B/B2C filtering
+    let matchesType = true;
+    if (selectedB2B && selectedB2C) {
+      matchesType = true; // Show all if both are selected
+    } else if (selectedB2B) {
+      matchesType = startup.businessType === 'B2B';
+    } else if (selectedB2C) {
+      matchesType = startup.businessType === 'B2C';
+    } else {
+      matchesType = true; // Show all if none are selected
+    }
+    
+    return matchesSearch && matchesCategory && matchesIndustry && matchesType;
+  });
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <div className="flex items-center space-x-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
+                <Settings className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-bold text-gray-900">LaunchMatch</span>
+            </div>
+
+            {/* Navigation */}
+            <nav className="hidden md:flex space-x-8">
+              <a href="#" className="text-blue-600 font-semibold border-b-2 border-blue-600 pb-1">
+                Explore Startups
+              </a>
+              <a href="#" className="text-gray-600 hover:text-gray-900 transition-colors">
+                FAQ
+              </a>
+              <a href="#" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Contact Us
+              </a>
+            </nav>
+
+            {/* User Profile */}
+            <div className="flex items-center space-x-3">
+              <span className="text-gray-700 font-medium">Hi, {userName}!</span>
+              <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                <User className="h-5 w-5 text-gray-600" />
+              </div>
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="text-sm text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoggingOut ? "Logging out..." : "Logout"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Title */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Here are the latest startups in SaaS & AI for you, {userName}!
+          </h1>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          {/* Search Bar */}
+          <div className="flex-1 max-w-md relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              placeholder="Search startups..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 h-12 text-sm border border-gray-200 focus:border-gray-300 focus:ring-0 rounded-xl bg-white shadow-sm text-gray-600 placeholder-gray-500"
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div className="relative dropdown-container">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowCategoryDropdown(!showCategoryDropdown);
+                setShowIndustryDropdown(false);
+              }}
+              className="h-12 px-4 border border-gray-200 hover:border-gray-300 rounded-xl bg-white shadow-sm text-sm font-normal text-gray-600 min-w-[120px] flex items-center justify-between"
+            >
+              <span>{selectedCategory === "All" ? "Category" : selectedCategory}</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+            </Button>
+            {showCategoryDropdown && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => {
+                      setSelectedCategory(category);
+                      setShowCategoryDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors ${
+                      selectedCategory === category ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Industry Filter */}
+          <div className="relative dropdown-container">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowIndustryDropdown(!showIndustryDropdown);
+                setShowCategoryDropdown(false);
+              }}
+              className="h-12 px-4 border border-gray-200 hover:border-gray-300 rounded-xl bg-white shadow-sm text-sm font-normal text-gray-600 min-w-[120px] flex items-center justify-between"
+            >
+              <span>{selectedIndustry === "All" ? "Industry" : selectedIndustry}</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${showIndustryDropdown ? 'rotate-180' : ''}`} />
+            </Button>
+            {showIndustryDropdown && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                {industries.map((industry) => (
+                  <button
+                    key={industry}
+                    onClick={() => {
+                      setSelectedIndustry(industry);
+                      setShowIndustryDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors ${
+                      selectedIndustry === industry ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                    }`}
+                  >
+                    {industry}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* B2B Checkbox */}
+          <div className="flex items-center space-x-2 px-2">
+            <input
+              id="b2b-checkbox"
+              type="checkbox"
+              checked={selectedB2B}
+              onChange={(e) => setSelectedB2B(e.target.checked)}
+              className="h-4 w-4 text-gray-600 focus:ring-gray-400 border-gray-200 rounded shadow-sm"
+            />
+            <label htmlFor="b2b-checkbox" className="text-sm font-medium text-gray-600 whitespace-nowrap">
+              B2B
+            </label>
+          </div>
+
+          {/* B2C Checkbox */}
+          <div className="flex items-center space-x-2 px-2">
+            <input
+              id="b2c-checkbox"
+              type="checkbox"
+              checked={selectedB2C}
+              onChange={(e) => setSelectedB2C(e.target.checked)}
+              className="h-4 w-4 text-gray-600 focus:ring-gray-400 border-gray-200 rounded shadow-sm"
+            />
+            <label htmlFor="b2c-checkbox" className="text-sm font-medium text-gray-600 whitespace-nowrap">
+              B2C
+            </label>
+          </div>
+        </div>
+
+        {/* Startups Grid */}
+        {isLoadingStartups ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="text-gray-500">Loading startups...</div>
+          </div>
+        ) : filteredStartups.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500 text-lg">No startups found matching your criteria.</div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-3">
+            {filteredStartups.map((startup, index) => (
+            <div 
+              key={startup._id || startup.id} 
+              className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 group relative flex flex-col h-full cursor-pointer border border-gray-100 hover:border-blue-200"
+              style={{ animationDelay: `${400 + index * 100}ms` }}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4 relative z-10">
+                <div className="flex items-start space-x-3 flex-1">
+                  <div className="relative flex-shrink-0">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 group-hover:bg-blue-200 group-hover:scale-110 transition-all duration-300 shadow-sm group-hover:shadow-md">
+                      <span className="text-lg font-bold text-blue-600 group-hover:text-blue-700">
+                        {startup.name.substring(0, 2).toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors duration-300 mb-1">
+                      {startup.name}
+                    </h3>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <div className="flex items-center space-x-1">
+                        <Eye className="h-4 w-4 text-blue-500" />
+                        <span className="font-medium">{startup.views || 0} views</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  <button
+                    onClick={() => toggleUpvote(startup._id || startup.id)}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all duration-300 hover:scale-105 ${
+                      upvotedStartups.has(startup._id || startup.id)
+                        ? 'bg-red-50 text-red-500 hover:bg-red-100 hover:shadow-md'
+                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-red-500 hover:shadow-md'
+                    }`}
+                  >
+                    <Heart 
+                      className={`h-4 w-4 ${
+                        upvotedStartups.has(startup._id || startup.id) 
+                          ? 'fill-current' 
+                          : ''
+                      }`} 
+                    />
+                    <span className="text-sm font-semibold">
+                      {getUpvoteCount(startup)}
+                    </span>
+                  </button>
+                  <Badge 
+                    variant={startup.businessType === 'B2B' ? 'default' : 'secondary'} 
+                    className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      startup.businessType === 'B2B' 
+                        ? 'bg-blue-100 text-blue-700 border-blue-200' 
+                        : 'bg-green-100 text-green-700 border-green-200'
+                    }`}
+                  >
+                    {startup.businessType}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="relative z-10 mb-4 flex-1">
+                <h4 className="font-semibold text-gray-900 text-base mb-2">
+                  {startup.tagline}
+                </h4>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                  {startup.description}
+                </p>
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2">
+                  {startup.categories.map((tag, tagIndex) => (
+                    <Badge 
+                      key={tag} 
+                      variant="outline" 
+                      className="text-xs font-medium px-2 py-1 rounded-full border-purple-200 bg-purple-50 text-purple-600 hover:border-purple-300 hover:bg-purple-100 transition-all duration-200"
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Special Offer */}
+              <div className="mb-4 p-4 rounded-xl bg-green-50 border border-green-200 relative z-10 group-hover:bg-green-100 group-hover:border-green-300 transition-all duration-300">
+                <div className="flex items-start space-x-3">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 shadow-sm flex-shrink-0 mt-0.5 group-hover:bg-green-600 group-hover:scale-110 transition-all duration-300">
+                    <Gift className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="font-bold text-green-800 text-sm">Special Offer</span>
+                    </div>
+                    <p className="text-xs text-green-700 leading-relaxed font-medium mb-2">
+                      Early adopter discount available! Get exclusive access to this startup.
+                    </p>
+                    <div className="inline-block">
+                      <div className="bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-sm hover:bg-green-700 hover:scale-105 transition-all duration-200 cursor-pointer">
+                        {isLoggedIn ? `Get 25% OFF` : 'Log in to see the discount'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200 relative z-10 mt-auto">
+                <div className="text-sm text-gray-500">
+                  <span className="font-medium">{startup.founderId?.fullName || 'Founder'}</span>
+                  <span className="mx-1">•</span>
+                  <span>{startup.industry}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white bg-purple-600 hover:bg-purple-700 group/btn font-semibold px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105"
+                >
+                  View Details
+                  <ExternalLink className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:scale-110" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        )}
+
+        {/* Load More */}
+        <div className="text-center mt-12">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="px-8 py-3 text-base font-semibold border-2 border-blue-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300 hover:shadow-xl"
+          >
+            Load More Startups
+          </Button>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default StartupsFeed;

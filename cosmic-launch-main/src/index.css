@@ -1,0 +1,347 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* LaunchMatch Design System - Blue SaaS Theme
+All colors MUST be HSL for consistent theming.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --primary-glow: 221.2 83.2% 60%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    /* Custom design tokens for SaaS LaunchMatch */
+    --gradient-primary: linear-gradient(135deg, hsl(221.2 83.2% 53.3%), hsl(221.2 83.2% 60%));
+    --gradient-secondary: linear-gradient(135deg, hsl(210 40% 96%), hsl(214.3 31.8% 91.4%));
+    --gradient-hero: linear-gradient(135deg, hsl(221.2 83.2% 53.3%) 0%, hsl(213.1 93.9% 67.8%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(210 40% 98%) 100%);
+    --gradient-card-hover: linear-gradient(135deg, hsl(221.2 83.2% 98%) 0%, hsl(213.1 93.9% 98%) 100%);
+    
+    --shadow-elegant: 0 10px 25px -3px hsl(221.2 83.2% 53.3% / 0.1);
+    --shadow-glow: 0 0 40px hsl(221.2 83.2% 60% / 0.15);
+    --shadow-card: 0 4px 6px -1px hsl(215.4 16.3% 46.9% / 0.1);
+    --shadow-card-hover: 0 20px 25px -5px hsl(221.2 83.2% 53.3% / 0.15), 0 10px 10px -5px hsl(221.2 83.2% 53.3% / 0.04);
+    --shadow-premium: 0 25px 50px -12px hsl(221.2 83.2% 53.3% / 0.25);
+    
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --primary-glow: 217.2 91.2% 65%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217.2 91.2% 59.8%;
+
+    /* Dark mode custom tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(217.2 91.2% 59.8%), hsl(217.2 91.2% 65%));
+    --gradient-secondary: linear-gradient(135deg, hsl(217.2 32.6% 17.5%), hsl(217.2 32.6% 20%));
+    --gradient-hero: linear-gradient(135deg, hsl(217.2 91.2% 59.8%) 0%, hsl(213.1 93.9% 80%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(222.2 84% 4.9%) 0%, hsl(217.2 32.6% 8%) 100%);
+    --gradient-card-hover: linear-gradient(135deg, hsl(217.2 91.2% 8%) 0%, hsl(213.1 93.9% 8%) 100%);
+    
+    --shadow-elegant: 0 10px 25px -3px hsl(217.2 91.2% 59.8% / 0.2);
+    --shadow-glow: 0 0 40px hsl(217.2 91.2% 65% / 0.25);
+    --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.3);
+    --shadow-card-hover: 0 20px 25px -5px hsl(217.2 91.2% 59.8% / 0.25), 0 10px 10px -5px hsl(217.2 91.2% 59.8% / 0.08);
+    --shadow-premium: 0 25px 50px -12px hsl(217.2 91.2% 59.8% / 0.4);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+}
+
+@layer components {
+  /* Animations */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes bounce-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.6s ease-out forwards;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.6s ease-out forwards;
+  }
+
+  /* Hero Button Variants - SaaS Style */
+  .btn-hero-primary {
+    @apply bg-blue-600 text-white;
+    @apply px-6 py-3 md:px-8 md:py-4 rounded-lg font-semibold text-base md:text-lg;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+    @apply transition-all duration-300 hover:scale-105 hover:shadow-lg hover:bg-blue-700;
+    @apply border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+  }
+
+  .btn-hero-primary:hover {
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1), 0 4px 6px -2px rgba(59, 130, 246, 0.05);
+  }
+
+  .btn-hero-secondary {
+    @apply bg-white border-2 border-blue-600 text-blue-600;
+    @apply px-6 py-3 md:px-8 md:py-4 rounded-lg font-semibold text-base md:text-lg;
+    @apply hover:bg-blue-600 hover:text-white hover:shadow-lg;
+    @apply transition-all duration-300 hover:scale-105;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+  }
+
+  /* Feature Cards - SaaS Style */
+  .feature-card {
+    @apply bg-white border border-gray-200 rounded-xl p-6 md:p-8;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+    @apply relative overflow-hidden;
+    @apply before:absolute before:inset-0 before:bg-gradient-to-br before:from-blue-50/50 before:to-transparent;
+    @apply before:opacity-0 before:transition-opacity before:duration-300;
+  }
+
+  .feature-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    @apply before:opacity-100;
+    @apply border-blue-200;
+  }
+
+  /* Startup Cards - Premium SaaS Style */
+  .startup-card {
+    @apply bg-white border border-gray-200/60 rounded-2xl p-6 md:p-8;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    @apply transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl;
+    @apply cursor-pointer relative overflow-hidden;
+    @apply before:absolute before:inset-0 before:bg-gradient-to-br before:from-blue-50/20 before:to-transparent;
+    @apply before:opacity-0 before:transition-all before:duration-500;
+  }
+
+  .startup-card:hover {
+    box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.1);
+    @apply before:opacity-100 border-blue-200;
+    @apply transform scale-[1.02];
+  }
+
+  .startup-card-premium {
+    @apply bg-white border-2 border-blue-200/60 rounded-2xl p-6 md:p-8;
+    box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+    @apply transition-all duration-500 hover:-translate-y-4 hover:shadow-2xl;
+    @apply cursor-pointer relative overflow-hidden;
+    @apply before:absolute before:inset-0 before:bg-gradient-to-br before:from-blue-50/30 before:to-transparent;
+    @apply before:opacity-100;
+    @apply after:absolute after:top-0 after:left-0 after:w-full after:h-1;
+    @apply after:bg-gradient-to-r after:from-blue-500 after:to-blue-600;
+  }
+
+  .startup-card-premium:hover {
+    box-shadow: 0 32px 64px -12px rgba(59, 130, 246, 0.25), 0 0 0 1px rgba(59, 130, 246, 0.2);
+    @apply before:opacity-100 border-blue-300;
+    @apply transform scale-[1.02];
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-primary-glow;
+    @apply bg-clip-text text-transparent;
+  }
+
+  /* Navigation - SaaS Style */
+  .nav-item {
+    @apply text-gray-600 hover:text-blue-600;
+    @apply transition-all duration-300;
+    @apply relative after:absolute after:bottom-0 after:left-0;
+    @apply after:w-0 after:h-0.5 after:bg-blue-600;
+    @apply after:transition-all after:duration-300;
+    @apply hover:after:w-full hover:text-blue-600;
+    @apply px-3 py-2 rounded-lg hover:bg-blue-50;
+  }
+
+  /* Responsive Utilities */
+  .container {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Mobile Navigation */
+  .mobile-nav {
+    @apply fixed inset-0 z-50 bg-background/95 backdrop-blur-sm;
+    @apply md:hidden;
+  }
+
+  /* Improved Focus States */
+  .focus-visible {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+
+  /* Loading States */
+  .loading {
+    @apply animate-pulse;
+  }
+
+  /* Improved Typography */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+
+  /* SaaS Shadows */
+  .shadow-soft {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-medium {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-strong {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* SaaS Glass Effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-gray-200/50;
+  }
+}
