@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import StartupsFeed from "./pages/StartupsFeed";
+import StartupDetails from "./pages/StartupDetails";
 import FounderDashboard from "./pages/FounderDashboard";
 import SubmitStartup from "./pages/SubmitStartup";
 import NotFound from "./pages/NotFound";
@@ -26,6 +27,7 @@ const AnimatedRoutes = () => {
           { p: "/signup", e: <Signup /> },
           { p: "/startups-feed", e: <StartupsFeed /> },
           { p: "/founder-dashboard", e: <FounderDashboard /> },
+          { p: "/startups/:id", e: <StartupDetails /> },
           { p: "/submit-startup", e: <SubmitStartup /> },
           { p: "/contact", e: <Contact /> },
           { p: "*", e: <NotFound /> },

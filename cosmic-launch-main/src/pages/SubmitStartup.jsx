@@ -7,12 +7,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, Rocket, Building2, Users, Globe, Target, FileText, UploadCloud, ImagePlus } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { startupAPI, handleAPIError } from "../services/api";
 
 const SubmitStartup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [startupId, setStartupId] = useState(null);
+  const location = useLocation();
+
+  // Prefill when editing existing startup
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('startupId');
+    console.log('SubmitStartup useEffect - startupId from URL:', id);
+    console.log('SubmitStartup useEffect - location.search:', location.search);
+    
+    const load = async () => {
+      if (!id) {
+        console.log('No startupId found, staying in create mode');
+        return;
+      }
+      console.log('Setting edit mode for startupId:', id);
+      setIsEditMode(true);
+      setStartupId(id);
+      try {
+        console.log('Fetching startup data for ID:', id);
+        const data = await startupAPI.getStartupById(id);
+        console.log('Received startup data:', data);
+        setFormData(prev => ({
+          ...prev,
+          name: data.name || '',
+          contactEmail: data.contactEmail || '',
+          tagline: data.tagline || '',
+          description: data.description || '',
+          industry: data.industry || '',
+          categories: data.categories || [],
+          businessType: data.businessType || '',
+          targetAudience: data.targetAudience || '',
+          website: data.website || '',
+          feedbackLink: data.feedbackLink || '',
+          specialOffer: data.specialOfferText || '',
+          couponCode: data.specialOfferCode || ''
+        }));
+        console.log('Form data updated for edit mode');
+      } catch (error) {
+        console.error('Error fetching startup data:', error);
+      }
+    };
+    load();
+  }, [location.search]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
 
@@ -104,6 +149,25 @@ const SubmitStartup = () => {
     setIsLoading(true);
 
     try {
+      // Client-side size guards: hard-stop if payload too large
+      const logoBytes = formData.logoFile?.size || 0;
+      const mediaBytes = (formData.mediaFiles || []).reduce((sum, f) => sum + (f?.size || 0), 0);
+      const totalBytes = logoBytes + mediaBytes;
+      const MAX_TOTAL_BYTES = 12 * 1024 * 1024; // 12MB total cap client-side
+      const MAX_DESC_CHARS = 4000; // prevent extremely large descriptions
+
+      if (formData.description && formData.description.length > MAX_DESC_CHARS) {
+        setIsLoading(false);
+        setError(`Description too long. Keep under ${MAX_DESC_CHARS} characters.`);
+        return;
+      }
+
+      if (totalBytes > MAX_TOTAL_BYTES) {
+        setIsLoading(false);
+        const mb = (totalBytes / (1024 * 1024)).toFixed(2);
+        setError(`Uploads too large (${mb} MB). Please keep total under ${(MAX_TOTAL_BYTES / (1024 * 1024))} MB or upload fewer/smaller files.`);
+        return;
+      }
       // Convert files to base64 (quick MVP)
       const fileToBase64 = (file) => new Promise((resolve, reject) => {
         if (!file) return resolve(null);
@@ -143,15 +207,23 @@ const SubmitStartup = () => {
         media: mediaBase64
       };
 
-      console.log("Submitting startup:", payload);
-      const response = await startupAPI.createStartup(payload);
-
-      console.log("Startup created successfully:", response);
+      console.log(isEditMode ? "Updating startup:" : "Submitting startup:", payload);
+      
+      let response;
+      if (isEditMode) {
+        response = await startupAPI.updateStartup(startupId, payload);
+        console.log("Startup updated successfully:", response);
+      } else {
+        response = await startupAPI.createStartup(payload);
+        console.log("Startup created successfully:", response);
+      }
 
       if (response.message) {
         const successDiv = document.createElement('div');
         successDiv.className = 'bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4';
-        successDiv.textContent = "Startup submitted successfully! Redirecting to dashboard...";
+        successDiv.textContent = isEditMode 
+          ? "Startup updated successfully! Redirecting to dashboard..." 
+          : "Startup submitted successfully! Redirecting to dashboard...";
 
         const form = document.querySelector('form');
         form.insertBefore(successDiv, form.firstChild);
@@ -212,7 +284,9 @@ const SubmitStartup = () => {
             <Rocket className="h-4 w-4" />
             <span className="text-xs font-semibold tracking-wide">Submit your Startup</span>
           </div>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">Tell us about your startup</h1>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+            {isEditMode ? "Edit your startup" : "Tell us about your startup"}
+          </h1>
           <p className="text-sm text-gray-500 mt-1">All fields marked with * are required.</p>
         </div>
 
@@ -411,7 +485,7 @@ const SubmitStartup = () => {
                 <div className="flex items-center justify-end gap-3">
                   <Link to="/founder-dashboard" className="text-sm text-gray-600 hover:text-gray-800">Cancel</Link>
                   <Button type="submit" disabled={isLoading} className="h-10 px-5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-strong text-white">
-                    {isLoading ? "Submitting..." : "Submit Startup"}
+                    {isLoading ? (isEditMode ? "Updating..." : "Submitting...") : (isEditMode ? "Update Startup" : "Submit Startup")}
                   </Button>
                 </div>
               </div>

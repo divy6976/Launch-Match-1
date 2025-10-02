@@ -95,32 +95,42 @@ const StartupDiscovery = () => {
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <motion.div 
-          className="text-center mb-12 md:mb-16"
+          className="text-center mb-6 md:mb-10"
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl font-bold text-gray-900 md:text-4xl lg:text-5xl mb-4 text-balance">
-            Discover Our <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">Startups</span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 mb-3">
+            Top this week
+          </div>
+          <h2 className="text-3xl font-extrabold text-gray-900 md:text-4xl lg:text-5xl text-balance">
+            Most Upvoted <span className="bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">Startups</span> This Week
           </h2>
-          <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto text-balance leading-relaxed">
-            Explore innovative startups looking for early adopters. Be the first to try 
-            products that match your needs.
-          </p>
         </motion.div>
 
-        {/* Startup Grid */}
+        {/* Startup Grid (Top 3 ranked) */}
         <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-3">
-          {mockStartups.map((startup, index) => (
-            <motion.div 
-              key={startup.id} 
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.4, delay: 0.05 * index }}
-              className="startup-card"
-            >
+          {(() => {
+            const top = [...mockStartups].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0)).slice(0, 3);
+            const ordered = [top[1] || top[0], top[0], top[2] || top[0]]; // left:#2, center:#1, right:#3
+            return ordered.map((startup, index) => {
+              const absoluteRank = startup ? top.indexOf(startup) : index; // 0,1,2 in original ranking
+              const rankNum = absoluteRank + 1;
+              const isCenter = index === 1;
+              return (
+                <div key={startup?.id || index} className="relative pt-6">
+                  {/* Rank ribbon inspired by leaderboards */}
+                  <div className={`absolute -left-4 top-2 z-20 rounded-full px-3 h-7 grid place-items-center text-xs font-bold text-white shadow-strong ${rankNum===1?'bg-indigo-600': rankNum===2?'bg-slate-500':'bg-amber-600'}`}>
+                    #{rankNum}
+                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.4, delay: 0.05 * index }}
+                    className={`${isCenter ? 'startup-card-premium lg:scale-[1.04] lg:-translate-y-1' : 'startup-card'} relative flex flex-col h-full border-t-4 ${rankNum===1?'border-indigo-600': rankNum===2?'border-slate-400':'border-amber-500'}`}
+                  >
               {/* Header */}
               <div className="flex items-start justify-between mb-4 relative z-10">
                 <div className="flex items-start space-x-3 flex-1">
@@ -200,7 +210,7 @@ const StartupDiscovery = () => {
               </div>
 
               {/* Special Offer */}
-              <div className="mb-4 p-4 rounded-xl bg-green-50 border border-green-200 relative z-10">
+              <div className="mb-4 p-4 rounded-xl bg-green-50 border border-green-200 relative z-10 min-h-[112px]">
                 <div className="flex items-start space-x-3">
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 shadow-sm flex-shrink-0 mt-0.5">
                     <Gift className="h-3.5 w-3.5 text-white" />
@@ -223,8 +233,8 @@ const StartupDiscovery = () => {
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200 relative z-10 mt-auto">
+              {/* Footer - pinned to bottom for consistent alignment */}
+              <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-200 relative z-10">
                 <div className="text-sm text-gray-500">
                   <span className="font-medium">{startup.founder}</span>
                   <span className="mx-1">•</span>
@@ -239,8 +249,11 @@ const StartupDiscovery = () => {
                   <ExternalLink className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
                 </Button>
               </div>
-            </motion.div>
-          ))}
+                  </motion.div>
+                </div>
+              );
+            });
+          })()}
         </div>
 
         {/* Load More */}

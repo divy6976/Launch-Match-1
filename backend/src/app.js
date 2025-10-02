@@ -5,20 +5,24 @@ const {connectDB} = require('../config/database.js');
 const authRoutes = require('../routes/userRoutes.js');
 const cookieParser = require('cookie-parser');
 const startupRoutes=require('../routes/startupRoutes.js')
+const { getStartupsForFounder } = require('../controller/startupController');
 const feedbackRoutes=require('../routes/feedbackRoutes.js')
 
 const app = express()
 const port = 3000
 
-// Strong CORS guard: reflect any Origin and allow credentials (single source)
+// CORS: allow cookies from Vite dev (8080) to backend (3000)
 app.use((req, res, next) => {
-    // For local dev, allow all origins and avoid credentials to simplify CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin || '';
+    const allowed = ['http://localhost:8080', 'http://127.0.0.1:8080'];
+    if (allowed.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || 'Content-Type, Authorization, Cookie, Accept, Origin, X-Requested-With');
-    if (req.method === 'OPTIONS') {
-        return res.status(204).end();
-    }
+    if (req.method === 'OPTIONS') return res.status(204).end();
     next();
 });
 
@@ -26,15 +30,29 @@ app.use((req, res, next) => {
 
 // Remove package-based cors to avoid overrides; manual headers above handle CORS
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increase body size limits to allow small base64 images from the frontend
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(cookieParser());
 
 // Routes
+// Debug logger for only /api/startups traffic
+app.use('/api/startups', (req, res, next) => {
+    console.log(`[startups] ${req.method} ${req.originalUrl}`);
+    next();
+});
+
+// Minimal inline handler to verify route resolution. Swap back after confirming.
+// app.get('/api/startups/my-startups', (req, res) => {
+//     return res.status(200).json({ message: 'OK', startups: [], count: 0 });
+// });
 app.use('/api/users', authRoutes); // User waale saare routes yahan se handle honge
 app.use('/api/startups', startupRoutes); // Startup waale saare routes yahan se
 app.use('/api/feedback', feedbackRoutes); // Feedback waale saare routes yahan se
 
+app.use('/hello', (req, res) => {
+    res.json({ message: 'Hello World' });
+});
 // Debug route to check if server is working
 app.get('/api/test', (req, res) => {
     res.json({ message: 'Server is working!', timestamp: new Date() });

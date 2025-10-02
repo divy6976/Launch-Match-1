@@ -7,7 +7,7 @@ const API_BASE_URL = '/api';
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: false,
+  withCredentials: true, // send cookies via Vite proxy (same-origin dev)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -90,9 +90,34 @@ export const startupAPI = {
     const response = await api.get(`/startups/${startupId}/feedback`);
     return response.data;
   },
+  // Get startup details by id
+  getStartupById: async (id) => {
+    const response = await api.get(`/startups/${id}`);
+    return response.data;
+  },
+
+  // Update an existing startup (Founder only)
+  updateStartup: async (startupId, startupData) => {
+    const response = await api.put(`/startups/${startupId}`, startupData);
+    return response.data;
+  },
   // Get startups for current founder (analytics base)
   getStartupsForFounder: async () => {
     const response = await api.get('/startups/my-startups');
+    return response.data;
+  },
+
+  // Upvotes persistence for adopter
+  upvote: async (id) => {
+    const response = await api.post(`/startups/${id}/upvote`);
+    return response.data;
+  },
+  removeUpvote: async (id) => {
+    const response = await api.delete(`/startups/${id}/upvote`);
+    return response.data;
+  },
+  getMyUpvotes: async () => {
+    const response = await api.get('/startups/my-upvotes/list');
     return response.data;
   },
 

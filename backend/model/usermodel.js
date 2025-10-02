@@ -25,6 +25,11 @@ const userSchema = new mongoose.Schema({
     interests: {
         type: [String],
         default: []
+    },
+    upvotedStartups: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Startup',
+        default: []
     }
 }, { timestamps: true });
 

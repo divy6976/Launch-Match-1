@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -13,11 +13,14 @@ import {
   Edit,
   Star,
   Clock,
-  Users
+  Users,
+  ExternalLink
 } from "lucide-react";
 import { userAPI, startupAPI, handleAPIError } from "../services/api";
 
 const FounderDashboard = () => {
+  const navigate = useNavigate();
+  const hasLoadedDataRef = useRef(false);
   const [userName, setUserName] = useState("User");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -43,12 +46,12 @@ const FounderDashboard = () => {
     }
   }, []);
 
-  // Fetch startups when component mounts
+  // Fetch startups once after login (guard against StrictMode double-invoke)
   useEffect(() => {
-    if (isLoggedIn) {
-      fetchMyStartups();
-      fetchAnalytics();
-    }
+    if (!isLoggedIn) return;
+    if (hasLoadedDataRef.current) return;
+    hasLoadedDataRef.current = true;
+    fetchMyStartups();
   }, [isLoggedIn]);
 
   const handleLogout = async () => {
@@ -59,7 +62,12 @@ const FounderDashboard = () => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      localStorage.clear();
+      // Remove only auth/session keys so user data like upvoted startups persists
+      try {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userName');
+      } catch {}
       window.location.href = '/login';
     }
   };
@@ -71,6 +79,8 @@ const FounderDashboard = () => {
       
       if (response.startups) {
         setMyStartups(response.startups);
+        // Reuse the same list for analytics to avoid a duplicate API call
+        fetchAnalytics(response.startups);
       }
     } catch (error) {
       console.error("Error fetching startups:", error);
@@ -80,11 +90,8 @@ const FounderDashboard = () => {
     }
   };
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (startups) => {
     try {
-      // Use the same founder startups endpoint as a base; if none, keep zeros
-      const res = await startupAPI.getStartupsForFounder();
-      const startups = res.startups || [];
       if (startups.length === 0) {
         setStats({ matches: 0, views: 0, feedbacks: 0, feedbackRate: 0 });
         setFeedbackList([]);
@@ -97,7 +104,8 @@ const FounderDashboard = () => {
       // feedbacks count by calling feedback endpoint for each startup
       let feedbacks = 0;
       const allFeedback = [];
-      for (const s of startups) {
+      // Limit feedback fetches to first 3 startups to avoid spamming API
+      for (const s of startups.slice(0, 3)) {
         try {
           // this API exists: GET /api/startups/:id/feedback
           const fb = await startupAPI.getFeedbackForStartup(s._id || s.id);
@@ -280,42 +288,107 @@ const FounderDashboard = () => {
             // Show existing startups
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {myStartups.map((startup, index) => (
-                <div key={startup._id || startup.id} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-                        <Settings className="h-5 w-5 text-gray-600" />
+                <div key={startup._id || startup.id} className="startup-card group relative flex flex-col h-full">
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4 relative z-10">
+                    <div className="flex items-start space-x-3 flex-1">
+                      <div className="relative flex-shrink-0">
+                        {startup.logo ? (
+                          <img
+                            src={startup.logo}
+                            alt={startup.name}
+                            className="h-12 w-12 rounded-full object-cover shadow-sm"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 transition-all duration-300 shadow-sm">
+                            <span className="text-lg font-bold text-blue-600">{(startup.name || '').substring(0,2).toUpperCase()}</span>
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900 text-lg">{startup.name}</h3>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors duration-300 mb-1 line-clamp-1 break-anywhere">
+                          {startup.name}
+                        </h3>
                       </div>
                     </div>
                   </div>
                   
-                  <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                    {startup.description || startup.tagline}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <Badge className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
-                        LIVE
-                      </Badge>
+                  {/* Description */}
+                  <div className="relative z-10 mb-4 flex-1">
+                    <h4 className="font-semibold text-gray-900 text-base mb-2 line-clamp-2 break-anywhere">
+                      {startup.tagline}
+                    </h4>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2 break-anywhere">
+                      {startup.description}
+                    </p>
+
+                    <div className="mb-3 p-3 rounded-lg bg-green-50 border border-green-200">
+                      <div className="text-xs text-green-800 font-semibold mb-1">Special Offer</div>
+                      {(() => { const hasOffer = !!(startup.hasSpecialOffer || startup.specialOfferText || (startup.discount && startup.discount > 0) || startup.specialOfferCode); return (
+                        <div className="text-xs text-green-700">
+                          {hasOffer ? (startup.specialOfferText || 'Exclusive early adopter deal available.') : "This startup doesn't have a special offer right now."}
+                        </div>
+                      ); })()}
+                      {(() => { const hasOffer = !!(startup.hasSpecialOffer || startup.specialOfferText || (startup.discount && startup.discount > 0) || startup.specialOfferCode); return hasOffer ? (
+                        <div className="mt-2 inline-flex items-center gap-2">
+                          <span className="bg-green-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-md">
+                            {startup.discount ? `${startup.discount}% OFF` : 'Claim Offer'}
+                          </span>
+                          {startup.specialOfferCode && (
+                            <span className="text-[11px] font-mono bg-green-100 text-green-800 px-2 py-1 rounded-md border border-green-200">
+                              Code: {startup.specialOfferCode}
+                            </span>
+                          )}
+                        </div>
+                      ) : null; })()}
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex items-center gap-2">
+                      <Badge className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">LIVE</Badge>
                       <Badge className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
                         {startup.industry || startup.categories?.[0] || 'Tech'}
                       </Badge>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Edit className="h-3 w-3 mr-1" />
-                      Edit Listing
-                    </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <MessageSquare className="h-3 w-3 mr-1" />
-                      View Feedback
-                    </Button>
+                  {/* Single Edit button (full width), no founder/industry or view details */}
+                  <div className="pt-4 border-t border-gray-200 mt-auto relative z-10">
+                    <button
+                      type="button"
+                      className="w-full inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-semibold px-4 py-3 rounded-xl transition-all duration-300 hover:shadow-lg cursor-pointer"
+                      onClick={() => {
+                        const id = startup._id || startup.id;
+                        if (!id) {
+                          console.warn('No startup id to edit', startup);
+                          return;
+                        }
+                        const url = `/submit-startup?startupId=${id}`;
+                        console.log('Navigating to edit:', url);
+                        const before = window.location.pathname + window.location.search;
+                        navigate(url);
+                        setTimeout(() => {
+                          const after = window.location.pathname + window.location.search;
+                          if (after === before) {
+                            window.location.href = url;
+                          }
+                        }, 50);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          const id = startup._id || startup.id;
+                          if (!id) return;
+                          const url = `/submit-startup?startupId=${id}`;
+                          navigate(url);
+                        }
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </button>
+
+                    
                   </div>
                 </div>
               ))}

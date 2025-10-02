@@ -12,7 +12,7 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 border-b border-gray-100 shadow-sm">
+    <header className="sticky top-0 z-50 w-full backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 border-b border-gray-100 shadow-soft">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <motion.div
@@ -28,34 +28,36 @@ const Header = () => {
         </motion.div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-2 lg:space-x-4">
-          <a href="#startups" className="nav-item">
+        <nav className="hidden md:flex items-center">
+          <div className="flex items-center gap-1 rounded-full border border-gray-200 bg-white/70 px-1 py-1">
+          <a href="#startups" className="nav-item rounded-full px-4 py-2">
             Explore Startups
           </a>
-          <a href="#guides" className="nav-item flex items-center">
+          <a href="#guides" className="nav-item flex items-center rounded-full px-4 py-2">
             Guides
             <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </a>
-          <a href="#faq" className="nav-item">
+          <a href="#faq" className="nav-item rounded-full px-4 py-2">
             FAQ
           </a>
-          <a href="#contact" className="nav-item">
+          <a href="#contact" className="nav-item rounded-full px-4 py-2">
             Contact us
           </a>
+          </div>
         </nav>
 
         {/* Desktop Auth Buttons */}
-        <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
+        <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
           <Link to="/login">
-            <Button variant="ghost" className="text-base font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 hover:border-blue-300 px-6 py-2 transition-transform duration-200 hover:-translate-y-0.5">
+            <Button variant="ghost" className="text-base font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 hover:border-blue-300 px-5 py-2 rounded-full transition-transform duration-200 hover:-translate-y-0.5">
               Log In
             </Button>
           </Link>
           <Link to="/signup">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white text-base font-medium px-6 py-2 shadow-medium hover:shadow-strong transition-all duration-200 hover:-translate-y-0.5">
-              Join Now
+            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-base font-semibold px-6 py-2 rounded-full shadow-medium hover:shadow-strong transition-all duration-200 hover:-translate-y-0.5">
+              Get Started
             </Button>
           </Link>
         </div>
@@ -92,7 +94,7 @@ const Header = () => {
             transition={{ duration: 0.2 }}
             className="flex flex-col space-y-4 p-6 pt-20"
           >
-            <nav className="flex flex-col space-y-4">
+            <nav className="flex flex-col space-y-2">
               <a 
                 href="#startups" 
                 className="text-gray-700 hover:text-blue-600 text-lg font-medium py-3 transition-colors rounded-lg hover:bg-blue-50"
@@ -127,13 +129,13 @@ const Header = () => {
             </nav>
             <div className="flex flex-col space-y-3 pt-6 border-t border-gray-200">
               <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="ghost" className="text-lg font-medium justify-start text-blue-600 border border-blue-200 hover:bg-blue-50 w-full">
+                <Button variant="ghost" className="text-lg font-medium justify-start text-blue-600 border border-blue-200 hover:bg-blue-50 w-full rounded-xl">
                   Log In
                 </Button>
               </Link>
               <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white text-lg font-medium w-full shadow-medium hover:shadow-strong">
-                  Join Now
+                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-lg font-semibold w-full shadow-medium hover:shadow-strong rounded-xl">
+                  Get Started
                 </Button>
               </Link>
             </div>

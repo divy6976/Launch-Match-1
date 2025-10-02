@@ -29,6 +29,9 @@ const StartupsFeed = () => {
   const [selectedB2C, setSelectedB2C] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [upvotedStartups, setUpvotedStartups] = useState(new Set());
+  const [showUpvotedOnly, setShowUpvotedOnly] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(6);
 
   // Get user name from localStorage or URL params
   useEffect(() => {
@@ -72,13 +75,32 @@ const StartupsFeed = () => {
     };
   }, []);
 
-  // Fetch startups from API
+  // Load/save upvotes locally so the "Your Upvoted" view persists in dev
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('upvotedStartups');
+      if (raw) setUpvotedStartups(new Set(JSON.parse(raw)));
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem('upvotedStartups', JSON.stringify(Array.from(upvotedStartups)));
+    } catch {}
+  }, [upvotedStartups]);
+
+  // Fetch startups and user's upvotes from API
   useEffect(() => {
     const fetchStartups = async () => {
       try {
         setIsLoadingStartups(true);
-        const response = await startupAPI.getFeedForAdopter();
-        setStartups(response || []);
+        const [feed, myUpvotes] = await Promise.all([
+          startupAPI.getFeedForAdopter(),
+          startupAPI.getMyUpvotes().catch(() => ({ startups: [] }))
+        ]);
+        setStartups(feed || []);
+        if (myUpvotes && Array.isArray(myUpvotes.startups)) {
+          setUpvotedStartups(new Set(myUpvotes.startups.map(s => s._id || s.id)));
+        }
       } catch (error) {
         console.error("Error fetching startups:", error);
         setStartups([]);
@@ -97,16 +119,18 @@ const StartupsFeed = () => {
       const newSet = new Set(prev);
       if (newSet.has(startupId)) {
         newSet.delete(startupId);
+        startupAPI.removeUpvote(startupId).catch(() => {});
       } else {
         newSet.add(startupId);
+        startupAPI.upvote(startupId).catch(() => {});
       }
       return newSet;
     });
   };
 
   const getUpvoteCount = (startup) => {
-    const baseUpvotes = startup.upvotes;
-    const isUpvoted = upvotedStartups.has(startup.id);
+    const baseUpvotes = startup.upvotes || 0;
+    const isUpvoted = upvotedStartups.has(startup._id || startup.id);
     return isUpvoted ? baseUpvotes + 1 : baseUpvotes;
   };
 
@@ -122,8 +146,12 @@ const StartupsFeed = () => {
       console.error("Logout error:", error);
       // Continue with logout even if API call fails
     } finally {
-      // Clear local storage and redirect regardless of API response
-      localStorage.clear();
+      // Preserve user data like upvotes; remove only auth/session keys
+      try {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userName');
+      } catch {}
       window.location.href = '/login';
     }
   };
@@ -201,8 +229,20 @@ const StartupsFeed = () => {
       matchesType = true; // Show all if none are selected
     }
     
-    return matchesSearch && matchesCategory && matchesIndustry && matchesType;
+    const passesBase = matchesSearch && matchesCategory && matchesIndustry && matchesType;
+    if (!passesBase) return false;
+    if (showUpvotedOnly) {
+      return upvotedStartups.has(startup._id || startup.id);
+    }
+    return true;
   });
+
+  // Reset pagination when filters/search/source list change
+  useEffect(() => {
+    setVisibleCount(6);
+  }, [searchTerm, selectedCategory, selectedIndustry, selectedB2B, selectedB2C, startups]);
+
+  const displayedStartups = filteredStartups.slice(0, visibleCount);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
@@ -251,11 +291,33 @@ const StartupsFeed = () => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Here are the latest startups in SaaS & AI for you, {userName}!
-          </h1>
+        {/* Page Title and Upvoted Toggle */}
+        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {showUpvotedOnly ? 'Your Upvoted Startups' : `Here are the latest startups in SaaS & AI for you, ${userName}!`}
+            </h1>
+            {showUpvotedOnly && (
+              <p className="text-sm text-gray-600">Showing startups you upvoted. Use the toggle to go back.</p>
+            )}
+          </div>
+          <div className="inline-flex items-center rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowUpvotedOnly(false)}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${!showUpvotedOnly ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+            >
+              Explore All
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowUpvotedOnly(true)}
+              className={`px-4 py-2 text-sm font-medium transition-colors border-l border-gray-200 ${showUpvotedOnly ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              title="Show your upvoted startups"
+            >
+              Your Upvoted <span className="ml-1 inline-flex items-center justify-center text-[11px] font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-[1px]">{upvotedStartups.size}</span>
+            </button>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -379,24 +441,32 @@ const StartupsFeed = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:gap-8 lg:grid-cols-3">
-            {filteredStartups.map((startup, index) => (
+            {displayedStartups.map((startup, index) => (
             <div 
               key={startup._id || startup.id} 
-              className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 group relative flex flex-col h-full cursor-pointer border border-gray-100 hover:border-blue-200"
+              className="startup-card group relative flex flex-col h-full"
               style={{ animationDelay: `${400 + index * 100}ms` }}
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4 relative z-10">
                 <div className="flex items-start space-x-3 flex-1">
                   <div className="relative flex-shrink-0">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 group-hover:bg-blue-200 group-hover:scale-110 transition-all duration-300 shadow-sm group-hover:shadow-md">
-                      <span className="text-lg font-bold text-blue-600 group-hover:text-blue-700">
-                        {startup.name.substring(0, 2).toUpperCase()}
-                      </span>
-                    </div>
+                    {startup.logo ? (
+                      <img
+                        src={startup.logo}
+                        alt={startup.name}
+                        className="h-12 w-12 rounded-full object-cover shadow-sm group-hover:scale-110 transition-all duration-300 group-hover:shadow-md"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 group-hover:bg-blue-200 group-hover:scale-110 transition-all duration-300 shadow-sm group-hover:shadow-md">
+                        <span className="text-lg font-bold text-blue-600 group-hover:text-blue-700">
+                          {startup.name.substring(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors duration-300 mb-1">
+                    <h3 className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors duration-300 mb-1 line-clamp-1 break-anywhere">
                       {startup.name}
                     </h3>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -442,10 +512,10 @@ const StartupsFeed = () => {
 
               {/* Description */}
               <div className="relative z-10 mb-4 flex-1">
-                <h4 className="font-semibold text-gray-900 text-base mb-2">
+                <h4 className="font-semibold text-gray-900 text-base mb-2 line-clamp-2 break-anywhere">
                   {startup.tagline}
                 </h4>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 break-anywhere">
                   {startup.description}
                 </p>
 
@@ -473,14 +543,27 @@ const StartupsFeed = () => {
                     <div className="flex items-center space-x-2 mb-2">
                       <span className="font-bold text-green-800 text-sm">Special Offer</span>
                     </div>
-                    <p className="text-xs text-green-700 leading-relaxed font-medium mb-2">
-                      Early adopter discount available! Get exclusive access to this startup.
-                    </p>
-                    <div className="inline-block">
-                      <div className="bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-sm hover:bg-green-700 hover:scale-105 transition-all duration-200 cursor-pointer">
-                        {isLoggedIn ? `Get 25% OFF` : 'Log in to see the discount'}
+                    {(() => { const hasOffer = !!(startup.hasSpecialOffer || startup.specialOfferText || (startup.discount && startup.discount > 0) || startup.specialOfferCode); return (
+                      <p className="text-xs text-green-700 leading-relaxed font-medium mb-2">
+                      {hasOffer
+                        ? (startup.specialOfferText || 'Exclusive early adopter deal available.')
+                        : "This startup doesn't have a special offer right now."}
+                      </p>
+                    ); })()}
+                    {(() => { const hasOffer = !!(startup.hasSpecialOffer || startup.specialOfferText || (startup.discount && startup.discount > 0) || startup.specialOfferCode); return hasOffer ? (
+                      <div className="inline-flex items-center gap-2">
+                        <div className="bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-md shadow-sm hover:bg-green-700 hover:scale-105 transition-all duration-200 cursor-pointer">
+                          {isLoggedIn 
+                            ? (startup.discount ? `Get ${startup.discount}% OFF` : 'Claim Offer')
+                            : 'Log in to see the discount'}
+                        </div>
+                        {startup.specialOfferCode && (
+                          <span className="text-[11px] font-mono bg-green-100 text-green-800 px-2 py-1 rounded-md border border-green-200">
+                            Code: {startup.specialOfferCode}
+                          </span>
+                        )}
                       </div>
-                    </div>
+                    ) : null; })()}
                   </div>
                 </div>
               </div>
@@ -492,14 +575,13 @@ const StartupsFeed = () => {
                   <span className="mx-1">•</span>
                   <span>{startup.industry}</span>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-white bg-purple-600 hover:bg-purple-700 group/btn font-semibold px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105"
+                <a 
+                  href={`/startups/${startup._id || startup.id}`}
+                  className="text-white bg-purple-600 hover:bg-purple-700 group/btn font-semibold px-4 py-2 rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105 inline-flex items-center"
                 >
                   View Details
                   <ExternalLink className="ml-1.5 h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:scale-110" />
-                </Button>
+                </a>
               </div>
             </div>
           ))}
@@ -507,15 +589,19 @@ const StartupsFeed = () => {
         )}
 
         {/* Load More */}
-        <div className="text-center mt-12">
-          <Button 
-            variant="outline" 
-            size="lg" 
-            className="px-8 py-3 text-base font-semibold border-2 border-blue-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300 hover:shadow-xl"
-          >
-            Load More Startups
-          </Button>
-        </div>
+        {displayedStartups.length < filteredStartups.length && (
+          <div className="text-center mt-12">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="px-8 py-3 text-base font-semibold border-2 border-blue-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300 hover:shadow-xl"
+              onClick={() => setVisibleCount(prev => prev + 6)}
+              disabled={isLoadingStartups}
+            >
+              Load More Startups
+            </Button>
+          </div>
+        )}
       </main>
     </div>
   );
